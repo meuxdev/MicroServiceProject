@@ -34,6 +34,7 @@ namespace Play.Catalog.Service
             BsonSerializer.RegisterSerializer(new DateTimeOffsetSerializer(BsonType.String));
             serviceSettings = Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
 
+            // Configuration for the injection of the mongodb configuration. Database -> IMongoDatabase
             services.AddSingleton(serviceProvider =>
             {
                 var mongoDbSettings = Configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
@@ -41,6 +42,7 @@ namespace Play.Catalog.Service
                 return mongoClient.GetDatabase(serviceSettings.ServiceName);
             });
 
+            // Injection of the IItems Repository
             services.AddScoped<IItemsRepository, ItemsRepository>();
 
             services.AddControllers(options =>
