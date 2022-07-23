@@ -10,6 +10,7 @@ using MongoDB.Bson.Serialization.Serializers;
 using Play.Catalog.Service.Settings;
 using MongoDB.Driver;
 using Play.Catalog.Service.Repositories;
+using Play.Catalog.Service.Entities;
 
 namespace Play.Catalog.Service
 {
@@ -43,7 +44,11 @@ namespace Play.Catalog.Service
             });
 
             // Injection of the IItems Repository
-            services.AddScoped<IItemsRepository, ItemsRepository>();
+            services.AddScoped<IRepository<Item>>(serviceProvider =>
+            {
+                var database = serviceProvider.GetService<IMongoDatabase>();
+                return new MongoRepository<Item>(database, "items");
+            });
 
             services.AddControllers(options =>
             {
