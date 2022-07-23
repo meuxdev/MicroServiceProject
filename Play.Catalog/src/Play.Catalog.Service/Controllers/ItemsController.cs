@@ -5,8 +5,8 @@ using Play.Catalog.Service;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Play.Catalog.Service.Dtos;
-using Play.Catalog.Service.Repositories;
 using Play.Catalog.Service.Entities;
+using Play.Common;
 
 namespace Play.Catalog.Controllers
 {

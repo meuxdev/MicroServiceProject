@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using MongoDB.Driver;
-using Play.Catalog.Service.Entities;
+using System.Linq.Expressions;
 
-namespace Play.Catalog.Service.Repositories
+namespace Play.Common.MongoDB
 {
 
     public class MongoRepository<T> : IRepository<T> where T : IEntity
@@ -24,9 +24,19 @@ namespace Play.Catalog.Service.Repositories
             return await dbCollection.Find(filterBuilder.Empty).ToListAsync(); // returns all the items in the collection
         }
 
+        public async Task<IReadOnlyCollection<T>> GetAllAsync(Expression<Func<T, bool>> filter)
+        {
+            return await dbCollection.Find(filter).ToListAsync(); // returns all the items in the collection
+        }
+
         public async Task<T> GetAsync(Guid id)
         {
             FilterDefinition<T> filter = filterBuilder.Eq(entity => entity.Id, id); // building filter for id
+            return await dbCollection.Find(filter).FirstOrDefaultAsync(); // using the find 
+        }
+
+        public async Task<T> GetAsync(Expression<Func<T, bool>> filter)
+        {
             return await dbCollection.Find(filter).FirstOrDefaultAsync(); // using the find 
         }
 
@@ -61,5 +71,7 @@ namespace Play.Catalog.Service.Repositories
             FilterDefinition<T> filter = filterBuilder.Eq(item => item.Id, id); // filter based on the id
             await dbCollection.DeleteOneAsync(filter); // deletes one async
         }
+
+
     }
 }
