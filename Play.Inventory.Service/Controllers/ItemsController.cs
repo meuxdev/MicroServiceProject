@@ -38,13 +38,18 @@ namespace Play.Inventory.Service.Controllers
             var catalogItems = await catalogClient.GetCatalogItemsAsync();
             var inventoryItems = await itemsRepository.GetAllAsync(item => item.UserId == userId);
 
-            var inventoryItemsDtos = inventoryItems.Select(inventoryItem =>
-            {
-                var catalogItem = catalogItems.Single(item => item.Id == inventoryItem.CatalogItemId);
-                return inventoryItem.AsDto(catalogItem.Name, catalogItem.Description);
-            });
+            var inventoryDts = from it in inventoryItems
+                               from ct in catalogItems
+                               where it.CatalogItemId == ct.Id
+                               select it.AsDto(ct.Name, ct.Description);
 
-            return Ok(inventoryItemsDtos);
+            // var inventoryItemsDtos = inventoryItems.Select(inventoryItem =>
+            // {
+            //     var catalogItem = catalogItems.Single(item => item.Id == inventoryItem.CatalogItemId);
+            //     return inventoryItem.AsDto(catalogItem.Name, catalogItem.Description);
+            // });
+
+            return Ok(inventoryDts);
         }
 
 
