@@ -1,0 +1,18 @@
+# Mongo DB runing container
+# docker run -d --rm --name mong -p 27017:27017 -v mongodbdata:/data/db mongo
+
+
+version: '3.8' # features of docker compose. Version of docker engine
+
+services:
+  mongo: # name of the service
+    image: mongo # image
+    container_name: mongo # container name
+    ports:
+      - 27018:27017 # left computer port | rigth container port
+    volumes:
+      - mongodbdata:/data/db # assing the volume for mongo
+
+volumes:
+  mongodbdata: # creating the volume
+      
