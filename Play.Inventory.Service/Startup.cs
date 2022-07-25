@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ using Play.Common.MongoDB;
 using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
 using Polly;
+using Polly.Timeout;
 
 namespace Play.Inventory.Service
 {
@@ -27,11 +29,31 @@ namespace Play.Inventory.Service
         {
             // Adding the mongo db config
             services.AddMongo().AddMongoRepository<InventoryItem>("inventoryitems");
+
+            Random jitterer = new Random();
+
             // Adding the HTTP client for catalog.
             services.AddHttpClient<CatalogClient>(client =>
             {
                 client.BaseAddress = new Uri("https://localhost:5001");
-            }).AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1 /* Wait one second before giving up */ )); // Policy to handle external handler errors
+            })
+            .AddTransientHttpErrorPolicy(builder => builder.Or<TimeoutRejectedException>().WaitAndRetryAsync(
+                // Retry Amount
+                retryCount: 5,
+                // exponential backup
+                sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) + TimeSpan.FromMilliseconds(jitterer.Next(0, 1000)),
+                //! Remove in production
+                //! --------------------
+                onRetry: (outcome, timespan, retryAttempt) =>
+                {
+                    var serviceProvider = services.BuildServiceProvider();
+                    serviceProvider.GetService<ILogger<CatalogClient>>()?.LogWarning($"Delaying for {timespan.TotalSeconds}, then making retry {retryAttempt}");
+                }
+                //! --------------------
+                //! Remove in production
+            ))
+            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(1 /* Wait one second before giving up */ )); // Policy to handle external handler errors
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
